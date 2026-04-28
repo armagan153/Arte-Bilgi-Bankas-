@@ -1,5 +1,6 @@
 // src/firebase/firestore.js (Artık LocalStorage kullanıyor)
 import defaultData from '../data/data.json';
+import { syncToGithub } from '../services/githubSync';
 
 const STORAGE_KEY = 'arte_knowledge_base';
 
@@ -25,6 +26,7 @@ const getRecords = () => {
 const saveRecords = (records) => {
   localStorage.setItem(STORAGE_KEY, JSON.stringify(records));
   listeners.forEach(fn => fn([...records]));
+  return records;
 };
 
 const listeners = new Set();
@@ -78,7 +80,11 @@ export const addRecord = async (data) => {
     createdAt:        new Date().toISOString(),
     updatedAt:        new Date().toISOString(),
   };
-  saveRecords([...records, newRecord]);
+  const updatedRecords = [...records, newRecord];
+  saveRecords(updatedRecords);
+  
+  // GitHub'a asenkron gönder
+  syncToGithub(updatedRecords);
 };
 
 export const updateRecord = async (id, data) => {
@@ -97,24 +103,35 @@ export const updateRecord = async (id, data) => {
     updatedAt:        new Date().toISOString(),
   } : r);
   saveRecords(updated);
+  
+  // GitHub'a asenkron gönder
+  syncToGithub(updated);
 };
 
 export const deleteRecord = async (id) => {
   const records = getRecords();
-  saveRecords(records.filter(r => r.id !== id));
+  const updated = records.filter(r => r.id !== id);
+  saveRecords(updated);
+  
+  // GitHub'a asenkron gönder
+  syncToGithub(updated);
 };
 
 export const deleteAllRecords = async (category = null) => {
+  let finalRecords = [];
   if (category) {
     const records = getRecords();
-    const filtered = records.filter(r => {
+    finalRecords = records.filter(r => {
       const cat = r.category || 'qa';
       return cat !== category;
     });
-    saveRecords(filtered);
+    saveRecords(finalRecords);
   } else {
     saveRecords([]);
   }
+  
+  // GitHub'a asenkron gönder
+  syncToGithub(finalRecords);
 };
 
 export const importRecords = async (rows) => {
@@ -138,5 +155,9 @@ export const importRecords = async (rows) => {
       updatedAt:        new Date().toISOString(),
     };
   });
-  saveRecords([...records, ...newRecords]);
+  const updatedRecords = [...records, ...newRecords];
+  saveRecords(updatedRecords);
+  
+  // GitHub'a asenkron gönder
+  syncToGithub(updatedRecords);
 };

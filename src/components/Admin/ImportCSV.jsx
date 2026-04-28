@@ -16,7 +16,7 @@ const DIR_FIELDS = [
   { key: 'department', label: 'Müdürlük / Departman', required: false },
   { key: 'unit', label: 'Birim', required: false },
   { key: 'title', label: 'Ünvan', required: false },
-  { key: 'extension_number', label: 'Dahili No', required: true }
+  { key: 'extension_number', label: 'Dahili No', required: false }
 ];
 
 // Olası başlık tahminleri için sözlük
@@ -144,7 +144,7 @@ const ImportCSV = ({ onClose, onImported }) => {
       // Boş satırları filtrele (zorunlu alanları boş olanlar)
       const validRows = mappedRows.filter(row => {
         if (category === 'qa') return row.topic && row.response;
-        return row.personnel_name && row.extension_number;
+        return row.personnel_name; // Sadece personel adı zorunlu, dahili numara boş olabilir
       });
 
       if (validRows.length === 0) {

@@ -50,7 +50,7 @@ const KnowledgeCard = ({ record, index }) => {
   const isDirectory = record.category === 'directory';
 
   if (isDirectory) {
-    const isManager = record.title && record.title.toLowerCase().includes('müdür');
+    const isManager = record.title && record.title.toLocaleLowerCase('tr-TR').includes('müdür');
     
     // Müdür olanlarda vurgulu kırmızı çerçeve
     const baseClass = "p-5 animate-fade-in transition-all duration-300 hover:shadow-lg hover:shadow-black/20 flex flex-col sm:flex-row sm:items-center justify-between gap-4 rounded-2xl";

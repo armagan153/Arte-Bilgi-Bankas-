@@ -45,7 +45,7 @@ const ReaderPage = () => {
 
   // Filtrelenmiş kayıtlar
   const filtered = useMemo(() => {
-    const q = debouncedQuery.trim().toLowerCase();
+    const q = debouncedQuery.trim().toLocaleLowerCase('tr-TR');
     return records.filter((r) => {
       // Kategori filtresi
       const recordCategory = r.category || 'qa';
@@ -58,14 +58,14 @@ const ReaderPage = () => {
       if (!q) return true;
       
       return (
-        r.topic?.toLowerCase().includes(q) ||
-        r.department?.toLowerCase().includes(q) ||
-        r.response?.toLowerCase().includes(q) ||
-        r.extra_checks?.toLowerCase().includes(q) ||
-        r.personnel_name?.toLowerCase().includes(q) ||
-        r.extension_number?.toLowerCase().includes(q) ||
-        r.unit?.toLowerCase().includes(q) ||
-        r.title?.toLowerCase().includes(q)
+        r.topic?.toLocaleLowerCase('tr-TR').includes(q) ||
+        r.department?.toLocaleLowerCase('tr-TR').includes(q) ||
+        r.response?.toLocaleLowerCase('tr-TR').includes(q) ||
+        r.extra_checks?.toLocaleLowerCase('tr-TR').includes(q) ||
+        r.personnel_name?.toLocaleLowerCase('tr-TR').includes(q) ||
+        r.extension_number?.toLocaleLowerCase('tr-TR').includes(q) ||
+        r.unit?.toLocaleLowerCase('tr-TR').includes(q) ||
+        r.title?.toLocaleLowerCase('tr-TR').includes(q)
       );
     });
   }, [records, debouncedQuery, activeDept, activeCategory]);

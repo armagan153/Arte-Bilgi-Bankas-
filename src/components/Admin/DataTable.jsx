@@ -16,7 +16,7 @@ const DataTable = ({ records, onEdit, onDelete }) => {
     }
   };
 
-  const q = search.toLowerCase();
+  const q = search.toLocaleLowerCase('tr-TR');
   const filtered = records
     .filter((r) => {
       const searchStr = [
@@ -27,20 +27,20 @@ const DataTable = ({ records, onEdit, onDelete }) => {
         r.extension_number,
         r.title,
         r.unit
-      ].join(' ').toLowerCase();
+      ].join(' ').toLocaleLowerCase('tr-TR');
       return searchStr.includes(q);
     })
     .sort((a, b) => {
-      let av = (a[sortField] || '').toString().toLowerCase();
-      let bv = (b[sortField] || '').toString().toLowerCase();
+      let av = (a[sortField] || '').toString().toLocaleLowerCase('tr-TR');
+      let bv = (b[sortField] || '').toString().toLocaleLowerCase('tr-TR');
       
       // Özel sıralamalar
       if (sortField === 'title_name') {
-        av = (a.topic || a.personnel_name || '').toString().toLowerCase();
-        bv = (b.topic || b.personnel_name || '').toString().toLowerCase();
+        av = (a.topic || a.personnel_name || '').toString().toLocaleLowerCase('tr-TR');
+        bv = (b.topic || b.personnel_name || '').toString().toLocaleLowerCase('tr-TR');
       } else if (sortField === 'content') {
-        av = (a.response || a.extension_number || '').toString().toLowerCase();
-        bv = (b.response || b.extension_number || '').toString().toLowerCase();
+        av = (a.response || a.extension_number || '').toString().toLocaleLowerCase('tr-TR');
+        bv = (b.response || b.extension_number || '').toString().toLocaleLowerCase('tr-TR');
       }
 
       const cmp = av < bv ? -1 : av > bv ? 1 : 0;

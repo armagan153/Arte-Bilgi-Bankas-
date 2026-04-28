@@ -12,15 +12,35 @@ const generateId = () => {
 };
 
 const getRecords = () => {
-  const data = localStorage.getItem(STORAGE_KEY);
-  if (!data) {
+  const isAdmin = typeof sessionStorage !== 'undefined' && sessionStorage.getItem('arte_admin') === 'true';
+  const localDataStr = localStorage.getItem(STORAGE_KEY);
+  
+  // Eğer okuyucu (personel) ise HER ZAMAN Cloudflare'dan gelen güncel build verisini göster.
+  // Böylece mobil cihazlarda asla eski veri kalmaz (soruların gelmemesi sorunu çözülür).
+  if (!isAdmin) {
+    return defaultData || [];
+  }
+
+  // Admin ise anlık değişikliklerini görebilmesi için localStorage'ı kullan.
+  let localData = [];
+  if (localDataStr) {
+    try {
+      localData = JSON.parse(localDataStr);
+    } catch (e) {
+      localData = [];
+    }
+  }
+
+  // Admin yeni bir cihazdan giriyorsa localStorage boştur, build verisini yükle.
+  if (!localData || localData.length === 0) {
     if (defaultData && defaultData.length > 0) {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(defaultData));
       return defaultData;
     }
     return [];
   }
-  return JSON.parse(data);
+
+  return localData;
 };
 
 const saveRecords = (records) => {

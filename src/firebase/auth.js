@@ -1,45 +1,44 @@
-// src/firebase/auth.js (Artık LocalStorage kullanıyor)
+// src/firebase/auth.js
+import { auth } from './config';
+import { 
+  signInWithPopup, 
+  GoogleAuthProvider, 
+  signOut, 
+  onAuthStateChanged 
+} from 'firebase/auth';
 
-const AUTH_KEY = 'arte_admin_user';
-
-const listeners = new Set();
-
-const notifyListeners = (user) => {
-  listeners.forEach(fn => fn(user));
-};
+const provider = new GoogleAuthProvider();
 
 export const signInWithGoogle = async () => {
-  // Demo amaçlı gecikme simülasyonu
-  await new Promise(resolve => setTimeout(resolve, 800));
-  
-  const user = {
-    email: 'admin@arte.com.tr',
-    displayName: 'Sistem Yöneticisi',
-    photoURL: 'https://ui-avatars.com/api/?name=Admin&background=3b5ff5&color=fff'
-  };
-  
-  localStorage.setItem(AUTH_KEY, JSON.stringify(user));
-  notifyListeners(user);
-  return user;
+  try {
+    const result = await signInWithPopup(auth, provider);
+    return result.user;
+  } catch (error) {
+    console.error('Google Sign In Error:', error);
+    throw error;
+  }
 };
 
 export const signOutUser = async () => {
-  localStorage.removeItem(AUTH_KEY);
-  notifyListeners(null);
+  try {
+    await signOut(auth);
+  } catch (error) {
+    console.error('Sign Out Error:', error);
+    throw error;
+  }
 };
 
 export const subscribeToAuthChanges = (callback) => {
-  const data = localStorage.getItem(AUTH_KEY);
-  callback(data ? JSON.parse(data) : null);
-  
-  listeners.add(callback);
-  
-  return () => {
-    listeners.delete(callback);
-  };
+  return onAuthStateChanged(auth, (user) => {
+    callback(user);
+  });
 };
 
 export const isAdminEmail = (email) => {
-  // Local demo'da herkes admindir
-  return true;
+  if (!email) return false;
+  const adminEmailsStr = import.meta.env.VITE_ADMIN_EMAILS || '';
+  if (!adminEmailsStr) return true; // Eğer kısıtlama girilmediyse herkes admin
+  
+  const adminEmails = adminEmailsStr.split(',').map(e => e.trim().toLowerCase());
+  return adminEmails.includes(email.toLowerCase());
 };

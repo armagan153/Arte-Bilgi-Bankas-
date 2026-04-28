@@ -1,4 +1,5 @@
 // src/firebase/firestore.js (Artık LocalStorage kullanıyor)
+import defaultData from '../data/data.json';
 
 const STORAGE_KEY = 'arte_knowledge_base';
 
@@ -11,7 +12,14 @@ const generateId = () => {
 
 const getRecords = () => {
   const data = localStorage.getItem(STORAGE_KEY);
-  return data ? JSON.parse(data) : [];
+  if (!data) {
+    if (defaultData && defaultData.length > 0) {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(defaultData));
+      return defaultData;
+    }
+    return [];
+  }
+  return JSON.parse(data);
 };
 
 const saveRecords = (records) => {

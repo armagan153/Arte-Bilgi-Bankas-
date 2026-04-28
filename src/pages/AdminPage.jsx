@@ -1,6 +1,6 @@
 // src/pages/AdminPage.jsx
 import { useState, useEffect } from 'react';
-import { Plus, Upload, Database, Users, BookOpen, TrendingUp, Trash2, AlertTriangle, X } from 'lucide-react';
+import { Plus, Upload, Database, Users, BookOpen, TrendingUp, Trash2, AlertTriangle, X, Download } from 'lucide-react';
 import Navbar        from '../components/Layout/Navbar';
 import DataTable     from '../components/Admin/DataTable';
 import RecordModal   from '../components/Admin/RecordModal';
@@ -61,6 +61,19 @@ const AdminPage = () => {
     }
   };
 
+  const handleExportJSON = () => {
+    const dataStr = JSON.stringify(records, null, 2);
+    const dataBlob = new Blob([dataStr], { type: 'application/json' });
+    const url = URL.createObjectURL(dataBlob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = 'data.json';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+  };
+
   const departments = [...new Set(records.map((r) => r.department).filter(Boolean))];
   
   const qaCount = records.filter((r) => (r.category || 'qa') === 'qa').length;
@@ -82,9 +95,19 @@ const AdminPage = () => {
               onClick={() => setShowClearAll(true)}
               className="btn-ghost text-red-400 hover:bg-red-900/30 hover:text-red-300"
               disabled={records.length === 0}
+              title="Tüm veya seçili kategorilerdeki kayıtları sil"
             >
               <Trash2 size={16} />
               Toplu Sil
+            </button>
+            <button
+              onClick={handleExportJSON}
+              className="btn-secondary"
+              disabled={records.length === 0}
+              title="Verileri data.json olarak indir (Github için)"
+            >
+              <Download size={16} />
+              JSON İndir
             </button>
             <button
               id="import-btn"

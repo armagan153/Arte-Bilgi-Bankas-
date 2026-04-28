@@ -4,6 +4,11 @@ import { syncToGithub } from '../services/githubSync';
 
 const STORAGE_KEY = 'arte_knowledge_base';
 
+// Kullanıcıların cihazlarında kalan eski hatalı veriyi temizle
+if (typeof localStorage !== 'undefined') {
+  localStorage.removeItem(STORAGE_KEY);
+}
+
 const generateId = () => {
   if (typeof crypto !== 'undefined' && crypto.randomUUID) {
     return crypto.randomUUID();
@@ -11,47 +16,23 @@ const generateId = () => {
   return Date.now().toString(36) + Math.random().toString(36).substr(2);
 };
 
+// Uygulama açık kaldığı sürece verileri bellekte tutarız.
+// Sayfa yenilendiğinde her zaman GitHub'dan build edilmiş en güncel 'defaultData' yüklenir.
+let currentRecords = [...(defaultData || [])];
+
 const getRecords = () => {
-  const isAdmin = typeof sessionStorage !== 'undefined' && sessionStorage.getItem('arte_admin') === 'true';
-  const localDataStr = localStorage.getItem(STORAGE_KEY);
-  
-  // Eğer okuyucu (personel) ise HER ZAMAN Cloudflare'dan gelen güncel build verisini göster.
-  // Böylece mobil cihazlarda asla eski veri kalmaz (soruların gelmemesi sorunu çözülür).
-  if (!isAdmin) {
-    return defaultData || [];
-  }
-
-  // Admin ise anlık değişikliklerini görebilmesi için localStorage'ı kullan.
-  let localData = [];
-  if (localDataStr) {
-    try {
-      localData = JSON.parse(localDataStr);
-    } catch (e) {
-      localData = [];
-    }
-  }
-
-  // Admin yeni bir cihazdan giriyorsa localStorage boştur, build verisini yükle.
-  if (!localData || localData.length === 0) {
-    if (defaultData && defaultData.length > 0) {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(defaultData));
-      return defaultData;
-    }
-    return [];
-  }
-
-  return localData;
+  return currentRecords;
 };
 
 const saveRecords = (records) => {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(records));
+  currentRecords = records;
   listeners.forEach(fn => fn([...records]));
   return records;
 };
 
 const listeners = new Set();
 
-/** Tüm kayıtları "gerçek zamanlı" dinle (LocalStorage üzerinden) */
+/** Tüm kayıtları "gerçek zamanlı" dinle (Bellek üzerinden) */
 export const subscribeToRecords = (callback) => {
   const records = getRecords();
   
@@ -61,18 +42,8 @@ export const subscribeToRecords = (callback) => {
   
   listeners.add(callback);
   
-  // Diğer sekmelerden gelen güncellemeleri dinle
-  const handleStorage = (e) => {
-    if (e.key === STORAGE_KEY) {
-      const updatedRecords = getRecords().sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt));
-      callback(updatedRecords);
-    }
-  };
-  window.addEventListener('storage', handleStorage);
-  
   return () => {
     listeners.delete(callback);
-    window.removeEventListener('storage', handleStorage);
   };
 };
 

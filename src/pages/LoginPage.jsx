@@ -1,21 +1,23 @@
 // src/pages/LoginPage.jsx
 import { useState } from 'react';
 import { BookOpen, KeyRound, Eye, EyeOff, Shield } from 'lucide-react';
-import { signInWithGoogle } from '../firebase/auth';
 import { useAuth } from '../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
+import * as OTPAuth from 'otpauth';
 
 const LoginPage = () => {
-  const { loginAsReader } = useAuth();
+  const { loginAsReader, loginAsAdmin } = useAuth();
   const navigate           = useNavigate();
   const [password, setPassword] = useState('');
+  const [totpCode, setTotpCode] = useState('');
   const [showPass, setShowPass] = useState(false);
   const [passError, setPassError] = useState('');
-  const [googleError, setGoogleError] = useState('');
-  const [googleLoading, setGoogleLoading] = useState(false);
+  const [adminError, setAdminError] = useState('');
   const [activeTab, setActiveTab] = useState('reader'); // 'reader' | 'admin'
 
   const READER_PASSWORD = import.meta.env.VITE_READER_PASSWORD || 'arte2024';
+  // Varsayılan TOTP Secret (Kullanıcı Cloudflare'a ekleyene kadar bu geçerli olur)
+  const TOTP_SECRET = import.meta.env.VITE_TOTP_SECRET || 'WHZ2TTUWSAJW677K4K4ZAC6PEHWMJMMC';
 
   const handlePasswordLogin = (e) => {
     e.preventDefault();
@@ -28,28 +30,27 @@ const LoginPage = () => {
     }
   };
 
-  const handleGoogleLogin = async () => {
-    setGoogleLoading(true);
-    setGoogleError('');
-    try {
-      const user = await signInWithGoogle();
-      const adminEmails = (import.meta.env.VITE_ADMIN_EMAILS || '')
-        .split(',')
-        .map((e) => e.trim().toLowerCase());
+  const handleAdminLogin = (e) => {
+    e.preventDefault();
+    
+    // TOTP Doğrulama Objesi
+    let totp = new OTPAuth.TOTP({
+      issuer: 'ARTE Bilgi Bankası',
+      label: 'Admin',
+      algorithm: 'SHA1',
+      digits: 6,
+      period: 30,
+      secret: TOTP_SECRET,
+    });
 
-      if (!adminEmails.includes(user.email.toLowerCase())) {
-        const { signOutUser } = await import('../firebase/auth');
-        await signOutUser();
-        setGoogleError('Bu e-posta adresi yönetici listesinde bulunmuyor.');
-        return;
-      }
+    const delta = totp.validate({ token: totpCode, window: 1 });
+
+    if (delta !== null) {
+      loginAsAdmin();
       navigate('/admin', { replace: true });
-    } catch (err) {
-      if (err.code !== 'auth/popup-closed-by-user') {
-        setGoogleError(`Google giriş hatası: ${err.message}`);
-      }
-    } finally {
-      setGoogleLoading(false);
+    } else {
+      setAdminError('Hatalı kod. Lütfen Google Authenticator kodunuzu tekrar deneyin.');
+      setTimeout(() => setAdminError(''), 3000);
     }
   };
 
@@ -156,41 +157,51 @@ const LoginPage = () => {
 
         {/* --- Admin Girişi --- */}
         {activeTab === 'admin' && (
-          <div className="space-y-5 animate-fade-in">
+          <form onSubmit={handleAdminLogin} className="space-y-5 animate-fade-in">
             <div className="text-center">
-              <p className="text-slate-400 text-sm leading-relaxed">
-                Yönetici paneline erişim sağlamak için sisteme giriş yapın. (Şu anda Lokal Demo modunda çalışmaktadır, girişler simüle edilir.)
+              <p className="text-slate-400 text-sm leading-relaxed mb-4">
+                Yönetici paneline erişim sağlamak için Google Authenticator uygulamasındaki 6 haneli kodu girin.
               </p>
             </div>
 
-            {googleError && (
-              <p className="text-red-400 text-sm bg-red-950/40 border border-red-800/40 rounded-lg px-4 py-2.5">
-                {googleError}
+            <div>
+              <label className="block text-xs font-semibold text-slate-400 mb-2 uppercase tracking-wider">
+                Google Auth Kodu (6 Hane)
+              </label>
+              <div className="relative">
+                <input
+                  id="admin-totp"
+                  type="text"
+                  inputMode="numeric"
+                  pattern="[0-9]*"
+                  maxLength={6}
+                  value={totpCode}
+                  onChange={(e) => setTotpCode(e.target.value.replace(/\D/g, ''))}
+                  placeholder="000000"
+                  className="input-field text-center text-lg tracking-[0.5em] font-mono font-bold"
+                  autoComplete="off"
+                  autoFocus
+                />
+              </div>
+            </div>
+
+            {adminError && (
+              <p className="text-red-400 text-sm bg-red-950/40 border border-red-800/40 rounded-lg px-4 py-2.5 animate-fade-in">
+                {adminError}
               </p>
             )}
 
             <button
-              id="google-login-btn"
-              onClick={handleGoogleLogin}
-              disabled={googleLoading}
+              id="admin-login-btn"
+              type="submit"
               className="w-full flex items-center justify-center gap-3 py-3.5 px-6
                          bg-white hover:bg-slate-100 text-slate-800 font-semibold rounded-xl
-                         transition-all duration-200 active:scale-95 shadow-lg
-                         disabled:opacity-60 disabled:cursor-not-allowed"
+                         transition-all duration-200 active:scale-95 shadow-lg"
             >
-              {googleLoading ? (
-                <>
-                  <div className="w-5 h-5 border-2 border-slate-300 border-t-slate-700 rounded-full animate-spin" />
-                  Giriş yapılıyor…
-                </>
-              ) : (
-                <>
-                  <Shield size={20} className="text-brand-500" />
-                  Yönetici Olarak Giriş Yap
-                </>
-              )}
+              <Shield size={20} className="text-brand-500" />
+              Yönetici Olarak Giriş Yap
             </button>
-          </div>
+          </form>
         )}
       </div>
 

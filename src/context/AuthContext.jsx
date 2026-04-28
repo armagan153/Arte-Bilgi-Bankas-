@@ -1,28 +1,21 @@
 import { createContext, useContext, useEffect, useState } from 'react';
-import { subscribeToAuthChanges, isAdminEmail } from '../firebase/auth';
 
 const AuthContext = createContext(null);
 
 export const AuthProvider = ({ children }) => {
-  const [firebaseUser, setFirebaseUser] = useState(null);
   const [isAdmin, setIsAdmin]           = useState(false);
   const [isReader, setIsReader]         = useState(false);
   const [authLoading, setAuthLoading]   = useState(true);
 
-  // Auth durumunu dinle (Admin girişi için)
+  // Oturumları sessionStorage'dan geri yükle
   useEffect(() => {
-    const unsub = subscribeToAuthChanges((user) => {
-      setFirebaseUser(user);
-      setIsAdmin(user ? isAdminEmail(user.email) : false);
-      setAuthLoading(false);
-    });
-    return unsub;
-  }, []);
+    const readerStored = sessionStorage.getItem('arte_reader');
+    if (readerStored === 'true') setIsReader(true);
 
-  // Okuyucu oturumunu session storage'dan geri yükle
-  useEffect(() => {
-    const stored = sessionStorage.getItem('arte_reader');
-    if (stored === 'true') setIsReader(true);
+    const adminStored = sessionStorage.getItem('arte_admin');
+    if (adminStored === 'true') setIsAdmin(true);
+
+    setAuthLoading(false);
   }, []);
 
   const loginAsReader = () => {
@@ -30,20 +23,31 @@ export const AuthProvider = ({ children }) => {
     sessionStorage.setItem('arte_reader', 'true');
   };
 
+  const loginAsAdmin = () => {
+    setIsAdmin(true);
+    sessionStorage.setItem('arte_admin', 'true');
+  };
+
   const logoutReader = () => {
     setIsReader(false);
     sessionStorage.removeItem('arte_reader');
   };
 
+  const logoutAdmin = () => {
+    setIsAdmin(false);
+    sessionStorage.removeItem('arte_admin');
+  };
+
   return (
     <AuthContext.Provider
       value={{
-        firebaseUser,
         isAdmin,
         isReader,
         authLoading,
         loginAsReader,
         logoutReader,
+        loginAsAdmin,
+        logoutAdmin,
       }}
     >
       {children}

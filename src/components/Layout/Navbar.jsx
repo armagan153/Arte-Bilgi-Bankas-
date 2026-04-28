@@ -1,16 +1,15 @@
 // src/components/Layout/Navbar.jsx
 import { LogOut, BookOpen, Shield, ChevronRight } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
-import { signOutUser } from '../../firebase/auth';
 import { useNavigate } from 'react-router-dom';
 
 const Navbar = ({ variant = 'reader' }) => {
-  const { firebaseUser, isAdmin, logoutReader } = useAuth();
+  const { isAdmin, logoutReader, logoutAdmin } = useAuth();
   const navigate = useNavigate();
 
-  const handleLogout = async () => {
+  const handleLogout = () => {
     if (isAdmin) {
-      await signOutUser();
+      logoutAdmin();
     }
     logoutReader();
     navigate('/', { replace: true });
@@ -46,17 +45,10 @@ const Navbar = ({ variant = 'reader' }) => {
 
         {/* Sağ - Kullanıcı bilgisi + Çıkış */}
         <div className="flex items-center gap-3">
-          {isAdmin && firebaseUser && (
+          {isAdmin && (
             <div className="hidden sm:flex items-center gap-2">
-              {firebaseUser.photoURL && (
-                <img
-                  src={firebaseUser.photoURL}
-                  alt="profil"
-                  className="w-7 h-7 rounded-full border border-slate-700"
-                />
-              )}
               <span className="text-xs text-slate-400 max-w-[140px] truncate">
-                {firebaseUser.displayName || firebaseUser.email}
+                Yönetici
               </span>
             </div>
           )}

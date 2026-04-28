@@ -50,35 +50,45 @@ const KnowledgeCard = ({ record, index }) => {
   const isDirectory = record.category === 'directory';
 
   if (isDirectory) {
+    const isManager = record.title && record.title.toLowerCase().includes('müdür');
+    
+    // Müdür olanlarda vurgulu kırmızı çerçeve
+    const baseClass = "p-5 animate-fade-in transition-all duration-300 hover:shadow-lg hover:shadow-black/20 flex flex-col sm:flex-row sm:items-center justify-between gap-4 rounded-2xl";
+    const highlightClass = isManager 
+      ? "bg-red-950/20 border border-red-500/70 shadow-[0_0_15px_rgba(239,68,68,0.15)] hover:border-red-400" 
+      : "glass-card hover:border-slate-600/60";
+
     return (
       <article
-        className="glass-card p-5 animate-fade-in hover:border-slate-600/60 transition-all duration-300 hover:shadow-lg hover:shadow-black/20 flex flex-col sm:flex-row sm:items-center justify-between gap-4"
+        className={`${baseClass} ${highlightClass}`}
         style={{ animationDelay: `${Math.min(index * 40, 400)}ms` }}
       >
         <div className="flex items-start gap-4 flex-1 min-w-0">
-          <div className="w-12 h-12 rounded-full bg-slate-800 flex items-center justify-center shrink-0 border border-slate-700">
-            <User size={24} className="text-slate-400" />
+          <div className={`w-12 h-12 rounded-full flex items-center justify-center shrink-0 border ${
+            isManager ? 'bg-red-950 border-red-500/50 text-red-400' : 'bg-slate-800 border-slate-700 text-slate-400'
+          }`}>
+            <User size={24} />
           </div>
           <div className="flex-1 min-w-0">
-            <h2 className="text-lg font-bold text-slate-100 flex items-center gap-2">
+            <h2 className={`text-lg font-bold flex items-center gap-2 ${isManager ? 'text-red-100' : 'text-slate-100'}`}>
               {record.personnel_name || 'İsimsiz Personel'}
             </h2>
-            <div className="flex flex-col gap-y-1 mt-1.5 text-sm text-slate-400">
+            <div className={`flex flex-col gap-y-1 mt-1.5 text-sm ${isManager ? 'text-red-200/70' : 'text-slate-400'}`}>
               {hasContent(record.title) && (
                 <span className="flex items-start gap-1">
-                  <Briefcase size={14} className="text-slate-500 shrink-0 mt-0.5" />
-                  <span className="break-words">{record.title}</span>
+                  <Briefcase size={14} className={`${isManager ? 'text-red-400/80' : 'text-slate-500'} shrink-0 mt-0.5`} />
+                  <span className="break-words font-medium">{record.title}</span>
                 </span>
               )}
               {hasContent(record.department) && (
                 <span className="flex items-start gap-1">
-                  <Building size={14} className="text-slate-500 shrink-0 mt-0.5" />
+                  <Building size={14} className={`${isManager ? 'text-red-400/80' : 'text-slate-500'} shrink-0 mt-0.5`} />
                   <span className="break-words">{record.department}</span>
                 </span>
               )}
               {hasContent(record.unit) && (
                 <span className="flex items-start gap-1">
-                  <Tag size={14} className="text-slate-500 shrink-0 mt-0.5" />
+                  <Tag size={14} className={`${isManager ? 'text-red-400/80' : 'text-slate-500'} shrink-0 mt-0.5`} />
                   <span className="break-words">{record.unit}</span>
                 </span>
               )}
@@ -87,10 +97,12 @@ const KnowledgeCard = ({ record, index }) => {
         </div>
 
         {hasContent(record.extension_number) && (
-          <div className="flex items-center gap-3 shrink-0 bg-slate-900/50 p-2 pl-4 rounded-xl border border-slate-700/50">
+          <div className={`flex items-center gap-3 shrink-0 p-2 pl-4 rounded-xl border ${
+            isManager ? 'bg-red-950/40 border-red-800/50' : 'bg-slate-900/50 border-slate-700/50'
+          }`}>
             <div>
-              <p className="text-xs text-slate-500 font-semibold uppercase tracking-wider mb-0.5">Dahili No</p>
-              <p className="text-xl font-bold text-brand-400 tracking-wider">
+              <p className={`text-xs font-semibold uppercase tracking-wider mb-0.5 ${isManager ? 'text-red-400/80' : 'text-slate-500'}`}>Dahili No</p>
+              <p className={`text-xl font-bold tracking-wider ${isManager ? 'text-red-400' : 'text-brand-400'}`}>
                 {record.extension_number}
               </p>
             </div>
@@ -100,7 +112,9 @@ const KnowledgeCard = ({ record, index }) => {
               className={`p-2.5 rounded-lg transition-all duration-200 active:scale-95 ${
                 copied
                   ? 'bg-emerald-600/20 text-emerald-400 border border-emerald-600/40'
-                  : 'bg-slate-800 text-slate-300 hover:bg-slate-700 hover:text-white border border-slate-600'
+                  : isManager
+                    ? 'bg-red-950/80 text-red-300 hover:bg-red-900 hover:text-white border border-red-800/50'
+                    : 'bg-slate-800 text-slate-300 hover:bg-slate-700 hover:text-white border border-slate-600'
               }`}
             >
               {copied ? <Check size={18} /> : <Phone size={18} />}
